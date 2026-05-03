@@ -8,7 +8,8 @@ Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to
 - "server/" - Node.js API server
 - ".env.example" - environment variables
 
-The backend uses Express for the Node.js API routes.
+The project will utilize MongoDB for the database, React will be used for the frontend webpage, Node.js will run the backend server, and Express will help Node.js create backend API routes.
+
 
 ## Getting Started
 
