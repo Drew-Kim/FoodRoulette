@@ -1,12 +1,12 @@
 # Food Roulette
 
-Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to help users discover nearby restaurants and randomly choose where to eat with a fun roulette-style picker.
+Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to help users discover nearby restaurants and randomly choose where to eat with a fun roulette style picker.
 
 ## Project Structure
 
-- `client/` - React webpage built with Vite
-- `server/` - Node.js API server
-- `.env.example` - safe example environment variables
+- "client/" - React webpage
+- "server/" - Node.js API server
+- ".env.example" - environment variables
 
 The backend uses Express for the Node.js API routes.
 
@@ -24,7 +24,7 @@ Create a local environment file for private values:
 cp .env.example .env
 ```
 
-Then update `.env` with your real MongoDB connection string and API keys. Do not commit `.env`.
+Then update `.env` with your real MongoDB connection string and API keys. Do not commit .env.
 
 Start the client and server:
 

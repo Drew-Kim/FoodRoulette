@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const wheelItems = ['Tacos', 'Sushi', 'Burgers', 'Thai', 'Pizza', 'Ramen'];
 
 function App() {
   const [serverStatus, setServerStatus] = useState('Checking...');
@@ -14,15 +15,14 @@ function App() {
   useEffect(() => {
     async function loadStatus() {
       try {
-        const [healthResponse, dbResponse] = await Promise.all([
-          fetch(`${API_URL}/api/health`),
-          fetch(`${API_URL}/api/db-status`)
-        ]);
-
+        // Ask the backend if the Node server is running.
+        const healthResponse = await fetch(`${API_URL}/api/health`);
         const health = await healthResponse.json();
-        const database = await dbResponse.json();
-
         setServerStatus(health.message || 'Node server is running');
+
+        // Ask the backend if MongoDB is connected.
+        const databaseResponse = await fetch(`${API_URL}/api/db-status`);
+        const database = await databaseResponse.json();
         setDatabaseStatus(database.message || database.status);
       } catch (error) {
         setServerStatus('Node server is not connected yet');
@@ -33,20 +33,13 @@ function App() {
     loadStatus();
   }, []);
 
-  const wheelItems = useMemo(
-    () => ['Tacos', 'Sushi', 'Burgers', 'Thai', 'Pizza', 'Ramen'],
-    []
-  );
-
   return (
     <main className="app-shell">
       <section className="intro">
         <div>
-          <p className="course-label">CS110 Course Project</p>
           <h1>Food Roulette</h1>
           <p className="summary">
-            A simple MERN app starter for finding restaurants with MongoDB, Node.js,
-            and React.
+            Spin to find a random restaurant.
           </p>
         </div>
         <div className="status-panel" aria-label="Project connection status">
@@ -92,19 +85,12 @@ function App() {
         </form>
 
         <div className="roulette-panel">
-          <div className="wheel" aria-label="Sample roulette wheel">
+          <div className="wheel" aria-label="Sample roulette wheel"></div>
+
+          <div className="wheel-options">
             {wheelItems.map((item, index) => (
-              <span key={item} style={{ '--angle': `${index * 60}deg` }}>
-                {item}
-              </span>
+              <span key={item}>{item}</span>
             ))}
-          </div>
-          <div>
-            <h2>Ready for the next step</h2>
-            <p>
-              This starter page is connected to the Node API. Yelp search, accounts,
-              favorites, and MongoDB collections can be added one feature at a time.
-            </p>
           </div>
         </div>
       </section>
