@@ -1,0 +1,15 @@
+{
+  "name": "food-roulette",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Food Roulette is a React, Node.js, and MongoDB web app that helps users discover nearby restaurants and randomly choose where to eat.",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
