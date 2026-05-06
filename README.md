@@ -2,6 +2,8 @@
 
 Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to help users discover nearby restaurants and randomly choose where to eat with a fun roulette style picker.
 
+[www.foodroulette.cc](www.foodroulette.cc)
+
 ## Project Structure
 
 - "client/" - React webpage
@@ -12,20 +14,26 @@ The project will utilize MongoDB for the database, React will be used for the fr
 
 ## Dependencies
 
-Client:
+The client uses React and Vite.
 
-- react - builds the webpage user interface.
-- react-dom - connects React to the browser page.
-- vite - runs the local React dev server and builds the client for deployment.
-- @vitejs/plugin-react - helps Vite work with React.
+- React builds the webpage.
+- React DOM displays the React app in the browser.
+- Vite runs the local client server and builds the client for deployment.
+- Vite React plugin helps Vite understand React code.
 
-Server:
+The server uses Express, MongoDB tools, and environment variables.
 
-- express - creates the backend API routes.
-- cors - allows the React client to call the backend API.
-- dotenv - loads private values from `server/.env`.
-- mongoose - connects the server to MongoDB.
-- nodemon - restarts the server during development when files change.
+- Express creates the backend API routes.
+- CORS lets the React client talk to the backend.
+- Dotenv loads private values from `server/.env`.
+- Mongoose connects the server to MongoDB.
+- Nodemon can restart the server while developing.
+
+The project also uses hosting tools.
+
+- Vercel hosts the React client online.
+- Render hosts the Node API online.
+- MongoDB Atlas hosts the database online.
 
 ## Getting Started
 
@@ -35,12 +43,7 @@ Install dependencies:
 npm run install:all
 ```
 
-Create a local environment file for private values:
-
-```bash
-cp .env.example server/.env
-```
-
+Create a local environment file for private values as "server/.env":
 Then update `server/.env` with your real MongoDB connection string and API keys. Do not commit `.env`.
 
 Start the client and server:
@@ -66,46 +69,3 @@ The Node API runs at:
 ```text
 http://localhost:5000
 ```
-
-## Deployment
-
-Use Spaceship for the domain, Vercel for the React client, Render for the Node API, and MongoDB Atlas for the database.
-
-Deploy the backend on Render:
-
-```text
-Root directory: server
-Build command: npm install
-Start command: npm start
-```
-
-Set these Render environment variables:
-
-```text
-MONGO_URI=your_real_mongodb_connection_string
-YELP_API_KEY=your_real_yelp_api_key
-CLIENT_URL=https://foodroulette.cc
-```
-
-Deploy the frontend on Vercel:
-
-```text
-Root directory: client
-Build command: npm run build
-Output directory: dist
-```
-
-Set this Vercel environment variable:
-
-```text
-VITE_API_URL=https://your-render-backend-url.onrender.com
-```
-
-Then add these domains in Vercel:
-
-```text
-foodroulette.cc
-www.foodroulette.cc
-```
-
-Use the DNS records Vercel gives you inside Spaceship DNS.
