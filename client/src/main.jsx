@@ -5,12 +5,31 @@ import './styles.css';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const wheelItems = ['Tacos', 'Sushi', 'Burgers', 'Thai', 'Pizza', 'Ramen'];
 
+function Admin() {
+  return (
+    <main className="app-shell">
+      <section className="intro">
+        <div>
+          <h1>Food Roulette Admin</h1>
+          <p className="summary">
+            Admin tools will live here as the project grows.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function App() {
+  const isAdminPage = window.location.pathname.startsWith('/admin');
   const [serverStatus, setServerStatus] = useState('Checking...');
   const [databaseStatus, setDatabaseStatus] = useState('Checking...');
   const [location, setLocation] = useState('San Diego, CA');
   const [cuisine, setCuisine] = useState('Any food');
   const [price, setPrice] = useState('Any price');
+  const [restaurants, setRestaurants] = useState([]);
+  const [searchStatus, setSearchStatus] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     async function loadStatus() {
@@ -33,6 +52,44 @@ function App() {
     loadStatus();
   }, []);
 
+  async function handleSearch(event) {
+    event.preventDefault();
+
+    setIsSearching(true);
+    setSearchStatus('');
+    setRestaurants([]);
+
+    const searchParams = new URLSearchParams({
+      location,
+      cuisine,
+      price
+    });
+
+    try {
+      const response = await fetch(`${API_URL}/api/restaurants?${searchParams}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Restaurant search failed.');
+      }
+
+      setRestaurants(data.restaurants || []);
+      setSearchStatus(
+        data.restaurants?.length
+          ? `Found ${data.restaurants.length} restaurants.`
+          : 'No restaurants found for that search.'
+      );
+    } catch (error) {
+      setSearchStatus(error.message || 'Restaurant search is unavailable right now.');
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  if (isAdminPage) {
+    return <Admin />;
+  }
+
   return (
     <main className="app-shell">
       <section className="intro">
@@ -49,7 +106,7 @@ function App() {
       </section>
 
       <section className="workspace" aria-label="Food roulette starter">
-        <form className="search-panel">
+        <form className="search-panel" onSubmit={handleSearch}>
           <label>
             Location
             <input
@@ -81,19 +138,47 @@ function App() {
             </select>
           </label>
 
-          <button type="button">Find Restaurants</button>
+          <button type="submit" disabled={isSearching}>
+            {isSearching ? 'Searching...' : 'Find Restaurants'}
+          </button>
+
+          {searchStatus && <p className="search-status">{searchStatus}</p>}
         </form>
 
         <div className="roulette-panel">
           <div className="wheel" aria-label="Sample roulette wheel"></div>
 
           <div className="wheel-options">
-            {wheelItems.map((item, index) => (
+            {wheelItems.map((item) => (
               <span key={item}>{item}</span>
             ))}
           </div>
         </div>
       </section>
+
+      {restaurants.length > 0 && (
+        <section className="results-panel" aria-label="Restaurant search results">
+          {restaurants.map((restaurant) => (
+            <article className="restaurant-card" key={restaurant.id}>
+              {restaurant.imageUrl && (
+                <img src={restaurant.imageUrl} alt={restaurant.name} />
+              )}
+
+              <div>
+                <h2>{restaurant.name}</h2>
+                <p>{restaurant.address}</p>
+                <div className="restaurant-meta">
+                  <span>{restaurant.rating} stars</span>
+                  {restaurant.price && <span>{restaurant.price}</span>}
+                </div>
+                <a href={restaurant.yelpUrl} target="_blank" rel="noreferrer">
+                  View on Yelp
+                </a>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
     </main>
   );
 }

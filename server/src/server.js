@@ -2,15 +2,30 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-dotenv.config();
+const currentDirectory = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(currentDirectory, '..', '.env') });
 
 const app = express();
 const port = process.env.PORT || 5000;
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const yelpApiUrl = 'https://api.yelp.com/v3/businesses/search';
 
 app.use(cors({ origin: clientUrl }));
 app.use(express.json());
+
+function getYelpPriceValue(price) {
+  const priceMap = {
+    '$': '1',
+    '$$': '2',
+    '$$$': '3',
+    '$$$$': '4'
+  };
+
+  return priceMap[price];
+}
 
 async function connectToDatabase() {
   const mongoUri = process.env.MONGO_URI;
@@ -44,6 +59,72 @@ app.get('/api/db-status', (request, response) => {
       ? 'MongoDB is connected'
       : 'MongoDB is not connected yet. Add a real MONGO_URI in .env.'
   });
+});
+
+app.get('/api/restaurants', async (request, response) => {
+  const yelpApiKey = process.env.YELP_API_KEY;
+  const location = request.query.location?.trim();
+  const cuisine = request.query.cuisine?.trim();
+  const price = getYelpPriceValue(request.query.price);
+
+  if (!location) {
+    return response.status(400).json({
+      message: 'Add a location before searching for restaurants.'
+    });
+  }
+
+  if (!yelpApiKey || yelpApiKey.includes('your_yelp_api_key_here')) {
+    return response.status(503).json({
+      message: 'Add a real YELP_API_KEY in .env before searching restaurants.'
+    });
+  }
+
+  const searchParams = new URLSearchParams({
+    location,
+    limit: '12',
+    sort_by: 'best_match'
+  });
+
+  if (cuisine && cuisine !== 'Any food') {
+    searchParams.set('term', cuisine);
+  }
+
+  if (price) {
+    searchParams.set('price', price);
+  }
+
+  try {
+    const yelpResponse = await fetch(`${yelpApiUrl}?${searchParams}`, {
+      headers: {
+        Authorization: `Bearer ${yelpApiKey}`,
+        Accept: 'application/json'
+      }
+    });
+
+    const yelpData = await yelpResponse.json();
+
+    if (!yelpResponse.ok) {
+      return response.status(yelpResponse.status).json({
+        message: yelpData.error?.description || 'Yelp could not complete the restaurant search.'
+      });
+    }
+
+    response.json({
+      restaurants: (yelpData.businesses || []).map((business) => ({
+        id: business.id,
+        name: business.name,
+        imageUrl: business.image_url,
+        rating: business.rating,
+        price: business.price,
+        address: business.location?.display_address?.join(', '),
+        yelpUrl: business.url
+      }))
+    });
+  } catch (error) {
+    response.status(500).json({
+      message: 'Restaurant search is unavailable right now.'
+    });
+  }
 });
 
 app.listen(port, async () => {

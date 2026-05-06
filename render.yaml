@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: food-roulette-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://foodroulette.cc
+      - key: MONGO_URI
+        sync: false
+      - key: YELP_API_KEY
+        sync: false
