@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_URL
-        value: https://foodroulette.cc
+        value: https://www.foodroulette.cc
       - key: MONGO_URI
         sync: false
       - key: YELP_API_KEY

@@ -12,6 +12,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const yelpApiUrl = 'https://api.yelp.com/v3/businesses/search';
+let databaseConnectionError = '';
 
 app.use(cors({ origin: clientUrl }));
 app.use(express.json());
@@ -36,9 +37,11 @@ async function connectToDatabase() {
   }
 
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
+    databaseConnectionError = '';
     console.log('MongoDB connected');
   } catch (error) {
+    databaseConnectionError = error.message;
     console.error('MongoDB connection error:', error.message);
   }
 }
@@ -52,12 +55,14 @@ app.get('/api/health', (request, response) => {
 
 app.get('/api/db-status', (request, response) => {
   const isConnected = mongoose.connection.readyState === 1;
+  const connectionState = mongoose.STATES[mongoose.connection.readyState] || 'unknown';
 
   response.json({
     status: isConnected ? 'connected' : 'not connected',
+    connectionState,
     message: isConnected
       ? 'MongoDB is connected'
-      : 'MongoDB is not connected yet. Add a real MONGO_URI in .env.'
+      : databaseConnectionError || 'MongoDB is not connected yet. Add a real MONGO_URI in .env.'
   });
 });
 
