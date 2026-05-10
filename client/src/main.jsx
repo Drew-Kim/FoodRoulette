@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
+import Login from './pages/login';
+import Navbar from './pages/navbar';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const wheelItems = ['Tacos', 'Sushi', 'Burgers', 'Thai', 'Pizza', 'Ramen'];
 
@@ -22,6 +25,9 @@ function Admin() {
 
 function App() {
   const isAdminPage = window.location.pathname.startsWith('/admin');
+  const isLoginPage = window.location.pathname.startsWith('/login');
+  const isHomePage = window.location.pathname.startsWith('/');
+
   const [serverStatus, setServerStatus] = useState('Checking...');
   const [databaseStatus, setDatabaseStatus] = useState('Checking...');
   const [location, setLocation] = useState('San Diego, CA');
@@ -90,7 +96,13 @@ function App() {
     return <Admin />;
   }
 
+  if(isLoginPage) {
+    return <Login />
+  }
+
   return (
+    <>
+    <Navbar />
     <main className="app-shell">
       <section className="intro">
         <div>
@@ -100,7 +112,7 @@ function App() {
           </p>
         </div>
         <div className="status-panel" aria-label="Project connection status">
-          <span>{serverStatus}</span>
+          <span>{serverStatus}</span> 
           <span>{databaseStatus}</span>
         </div>
       </section>
@@ -180,6 +192,7 @@ function App() {
         </section>
       )}
     </main>
+    </>
   );
 }
 
