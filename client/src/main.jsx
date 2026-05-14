@@ -3,7 +3,21 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const fallbackWheelItems = ['Tacos', 'Sushi', 'Burgers', 'Pasta', 'Pizza', 'Ramen'];
+const cuisineOptions = [
+  'Any food',
+  'Mexican',
+  'Japanese',
+  'Italian',
+  'Thai',
+  'Vegetarian',
+  'Korean',
+  'Indian',
+  'Mediterranean'
+];
+const fallbackWheelItems = ['Tacos', 'Sushi', 'Burgers', 'Pasta', 'Pizza', 'Ramen'].map((name) => ({
+  name
+}));
+const priceOptions = ['Any price', '$', '$$', '$$$', '$$$$'];
 const wheelColors = ['#e91e36', '#2f73e0', '#17a846', '#f2c536'];
 const spinDurationMs = 4200;
 
@@ -14,7 +28,7 @@ function Admin() {
         <div>
           <p className="eyebrow">Admin</p>
           <h1>Food Roulette Admin</h1>
-          <p className="summary">Admin tools will live here as the project grows.</p>
+          <p className="admin-summary">Admin tools will live here as the project grows.</p>
         </div>
       </section>
     </main>
@@ -60,6 +74,30 @@ function getDisplayName(name) {
   return `${name.slice(0, 16)}...`;
 }
 
+function getAddressLines(address) {
+  if (!address) {
+    return ['Address unavailable'];
+  }
+
+  const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
+
+  if (parts.length <= 1) {
+    return [address];
+  }
+
+  return [parts[0], parts.slice(1).join(', ')];
+}
+
+function AddressText({ address }) {
+  return (
+    <p>
+      {getAddressLines(address).map((line) => (
+        <span className="address-line" key={line}>{line}</span>
+      ))}
+    </p>
+  );
+}
+
 function getRotationDegrees(element) {
   const transform = window.getComputedStyle(element).transform;
 
@@ -76,6 +114,13 @@ function getRotationDegrees(element) {
   const angle = Math.atan2(Number(matrixValues[1]), Number(matrixValues[0])) * (180 / Math.PI);
 
   return (angle + 360) % 360;
+}
+
+function getPointerColorForRotation(rotation, sliceSize, segments) {
+  const pointerAngle = ((90 - (rotation % 360)) + 360) % 360;
+  const pointerSegmentIndex = Math.floor(pointerAngle / sliceSize) % segments.length;
+
+  return segments[pointerSegmentIndex]?.color || wheelColors[0];
 }
 
 function App() {
@@ -98,19 +143,10 @@ function App() {
   const [pointerColor, setPointerColor] = useState(wheelColors[0]);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  const wheelItems = restaurants.length
-    ? restaurants
-    : fallbackWheelItems.map((name) => ({ name }));
+  const wheelItems = restaurants.length ? restaurants : fallbackWheelItems;
   const wheelSegments = useMemo(() => getWheelSegments(wheelItems), [wheelItems]);
   const wheelGradient = useMemo(() => getWheelGradient(wheelSegments), [wheelSegments]);
   const sliceSize = 360 / wheelItems.length;
-
-  function getPointerColorForRotation(rotation) {
-    const pointerAngle = ((90 - (rotation % 360)) + 360) % 360;
-    const pointerSegmentIndex = Math.floor(pointerAngle / sliceSize) % wheelSegments.length;
-
-    return wheelSegments[pointerSegmentIndex]?.color || wheelColors[0];
-  }
 
   useEffect(() => {
     async function loadStatus() {
@@ -136,8 +172,8 @@ function App() {
       return;
     }
 
-    setPointerColor(getPointerColorForRotation(wheelRotation));
-  }, [isSpinning, wheelRotation, wheelSegments]);
+    setPointerColor(getPointerColorForRotation(wheelRotation, sliceSize, wheelSegments));
+  }, [isSpinning, wheelRotation, sliceSize, wheelSegments]);
 
   useEffect(() => {
     if (!isSpinning || !wheelRef.current) {
@@ -148,7 +184,7 @@ function App() {
 
     function updatePointerColor() {
       const currentRotation = getRotationDegrees(wheelRef.current);
-      const currentColor = getPointerColorForRotation(currentRotation);
+      const currentColor = getPointerColorForRotation(currentRotation, sliceSize, wheelSegments);
 
       setPointerColor((previousColor) => (
         previousColor === currentColor ? previousColor : currentColor
@@ -162,7 +198,7 @@ function App() {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isSpinning, wheelSegments]);
+  }, [isSpinning, sliceSize, wheelSegments]);
 
   async function handleSearch(event) {
     event.preventDefault();
@@ -232,11 +268,7 @@ function App() {
     <main className="app-shell">
       <section className="intro">
         <div>
-          <p className="eyebrow">Yelp-powered picker</p>
           <h1>Food Roulette</h1>
-          <p className="summary">
-            Filter nearby restaurants, fill the wheel with real Yelp results, then spin for a dinner pick.
-          </p>
         </div>
 
         <div className="status-panel" aria-label="Project connection status">
@@ -264,26 +296,18 @@ function App() {
           <label>
             Cuisine
             <select value={cuisine} onChange={(event) => setCuisine(event.target.value)}>
-              <option>Any food</option>
-              <option>Mexican</option>
-              <option>Japanese</option>
-              <option>Italian</option>
-              <option>Thai</option>
-              <option>Vegetarian</option>
-              <option>Korean</option>
-              <option>Indian</option>
-              <option>Mediterranean</option>
+              {cuisineOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
             </select>
           </label>
 
           <label>
             Price
             <select value={price} onChange={(event) => setPrice(event.target.value)}>
-              <option>Any price</option>
-              <option>$</option>
-              <option>$$</option>
-              <option>$$$</option>
-              <option>$$$$</option>
+              {priceOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
             </select>
           </label>
 
@@ -348,16 +372,25 @@ function App() {
 
           {selectedRestaurant && (
             <article className="winner-panel">
-              <p className="panel-kicker">Winner</p>
-              <h2>{selectedRestaurant.name}</h2>
-              <p>{selectedRestaurant.address}</p>
-              <div className="restaurant-meta">
-                <span>{selectedRestaurant.rating} stars</span>
-                {selectedRestaurant.price && <span>{selectedRestaurant.price}</span>}
+              {selectedRestaurant.imageUrl && (
+                <img
+                  className="winner-image"
+                  src={selectedRestaurant.imageUrl}
+                  alt={selectedRestaurant.name}
+                />
+              )}
+              <div>
+                <p className="panel-kicker">Winner</p>
+                <h2>{selectedRestaurant.name}</h2>
+                <AddressText address={selectedRestaurant.address} />
+                <div className="restaurant-meta">
+                  <span>{selectedRestaurant.rating} stars</span>
+                  {selectedRestaurant.price && <span>{selectedRestaurant.price}</span>}
+                </div>
+                <a href={selectedRestaurant.yelpUrl} target="_blank" rel="noreferrer">
+                  View on Yelp
+                </a>
               </div>
-              <a href={selectedRestaurant.yelpUrl} target="_blank" rel="noreferrer">
-                View on Yelp
-              </a>
             </article>
           )}
         </section>
@@ -371,7 +404,7 @@ function App() {
 
               <div>
                 <h2>{restaurant.name}</h2>
-                <p>{restaurant.address}</p>
+                <AddressText address={restaurant.address} />
                 <div className="restaurant-meta">
                   <span>{restaurant.rating} stars</span>
                   {restaurant.price && <span>{restaurant.price}</span>}
