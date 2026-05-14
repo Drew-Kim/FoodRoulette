@@ -331,31 +331,33 @@ function App() {
 
         <section className="roulette-panel" aria-label="Restaurant roulette wheel">
           <div className="roulette-stage">
-            <div
-              className="wheel-pointer"
-              style={{ '--pointer-color': pointerColor }}
-              aria-hidden="true"
-            ></div>
-            <div
-              className="wheel"
-              ref={wheelRef}
-              style={{
-                background: `conic-gradient(${wheelGradient})`,
-                transform: `rotate(${wheelRotation}deg)`
-              }}
-            >
-              {wheelSegments.map((item, index) => (
-                <span
-                  className="wheel-label"
-                  key={`${item.id || item.name}-${index}`}
-                  style={{
-                    '--label-angle': `${index * sliceSize + sliceSize / 2}deg`
-                  }}
-                >
-                  <span className="wheel-label-text">{getDisplayName(item.name)}</span>
-                </span>
-              ))}
-              <div className="wheel-center" aria-hidden="true"></div>
+            <div className="wheel-frame">
+              <div
+                className="wheel-pointer"
+                style={{ '--pointer-color': pointerColor }}
+                aria-hidden="true"
+              ></div>
+              <div
+                className="wheel"
+                ref={wheelRef}
+                style={{
+                  background: `conic-gradient(${wheelGradient})`,
+                  transform: `rotate(${wheelRotation}deg)`
+                }}
+              >
+                {wheelSegments.map((item, index) => (
+                  <span
+                    className="wheel-label"
+                    key={`${item.id || item.name}-${index}`}
+                    style={{
+                      '--label-angle': `${index * sliceSize + sliceSize / 2}deg`
+                    }}
+                  >
+                    <span className="wheel-label-text">{getDisplayName(item.name)}</span>
+                  </span>
+                ))}
+                <div className="wheel-center" aria-hidden="true"></div>
+              </div>
             </div>
           </div>
 
