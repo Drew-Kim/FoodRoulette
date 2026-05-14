@@ -175,7 +175,7 @@ button:disabled {
 }
 
 .roulette-stage {
-  --pointer-offset: 44px;
+  --pointer-offset: 58px;
   --wheel-radius: min(250px, 46vw);
   position: relative;
   display: grid;
@@ -248,9 +248,10 @@ button:disabled {
 .spin-controls {
   display: grid;
   gap: 12px;
+  padding-top: 32px;
   align-content: center;
   justify-items: start;
-  padding-left: 28px;
+  padding-left: 42px;
   transform: translateX(72px);
 }
 
