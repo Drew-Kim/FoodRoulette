@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
+import Navbar from './pages/navbar';
+import Login from './pages/login';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const cuisineOptions = [
   'Any food',
@@ -124,7 +127,16 @@ function getPointerColorForRotation(rotation, sliceSize, segments) {
 }
 
 function App() {
-  const isAdminPage = window.location.pathname.startsWith('/admin');
+  const userRole = localStorage.getItem('userRole');
+  const token = localStorage.getItem('token');
+  const isLoggedIn = !!token;
+
+  const path = window.location.pathname
+  const isAdminPage = path.startsWith('/admin');
+  const isLoginPage = path.startsWith('/login');
+  const isCustomerPage = path.startsWith('/customer') && isLoggedIn;
+  const isHomePage = path.startsWith('/admin');
+
   const wheelRef = useRef(null);
 
   const [serverStatus, setServerStatus] = useState('Checking...');
@@ -166,6 +178,25 @@ function App() {
 
     loadStatus();
   }, []);
+
+  // Check for session!!
+  useEffect(() => {
+    if (!token) return;
+    async function verifyToken() {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.authenticated) {
+          localStorage.clear();
+        }
+      } catch (e) {
+        console.error("Token verification failed.");
+      }
+    }
+    verifyToken();
+  }, [token]);
 
   useEffect(() => {
     if (isSpinning || !wheelRef.current) {
@@ -264,7 +295,17 @@ function App() {
     return <Admin />;
   }
 
+  if (isLoginPage) {
+    return <Login />;
+  }
+
+  if (isCustomerPage) {
+    return <Customer />;
+  }
+
   return (
+    <> 
+    <Navbar/>
     <main className="app-shell">
       <section className="intro">
         <div>
@@ -420,6 +461,7 @@ function App() {
         </section>
       )}
     </main>
+    </>
   );
 }
 
