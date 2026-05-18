@@ -12,8 +12,23 @@ const app = express();
 const port = process.env.PORT || 5000;
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const yelpApiUrl = 'https://api.yelp.com/v3/businesses/search';
+const allowedOrigins = new Set([
+  clientUrl,
+  'http://localhost:5173',
+  'http://localhost:5175'
+]);
+let databaseConnectionError = '';
 
-app.use(cors({ origin: clientUrl }));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  }
+}));
 app.use(express.json());
 
 function getYelpPriceValue(price) {
@@ -27,6 +42,16 @@ function getYelpPriceValue(price) {
   return priceMap[price];
 }
 
+function getRestaurantLimit(count) {
+  const requestedCount = Number.parseInt(count, 10);
+
+  if (Number.isNaN(requestedCount)) {
+    return 12;
+  }
+
+  return Math.min(Math.max(requestedCount, 2), 20);
+}
+
 async function connectToDatabase() {
   const mongoUri = process.env.MONGO_URI;
 
@@ -36,9 +61,11 @@ async function connectToDatabase() {
   }
 
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
+    databaseConnectionError = '';
     console.log('MongoDB connected');
   } catch (error) {
+    databaseConnectionError = error.message;
     console.error('MongoDB connection error:', error.message);
   }
 }
@@ -52,12 +79,14 @@ app.get('/api/health', (request, response) => {
 
 app.get('/api/db-status', (request, response) => {
   const isConnected = mongoose.connection.readyState === 1;
+  const connectionState = mongoose.STATES[mongoose.connection.readyState] || 'unknown';
 
   response.json({
     status: isConnected ? 'connected' : 'not connected',
+    connectionState,
     message: isConnected
       ? 'MongoDB is connected'
-      : 'MongoDB is not connected yet. Add a real MONGO_URI in .env.'
+      : databaseConnectionError || 'MongoDB is not connected yet. Add a real MONGO_URI in .env.'
   });
 });
 
@@ -66,6 +95,7 @@ app.get('/api/restaurants', async (request, response) => {
   const location = request.query.location?.trim();
   const cuisine = request.query.cuisine?.trim();
   const price = getYelpPriceValue(request.query.price);
+  const limit = getRestaurantLimit(request.query.count);
 
   if (!location) {
     return response.status(400).json({
@@ -81,7 +111,7 @@ app.get('/api/restaurants', async (request, response) => {
 
   const searchParams = new URLSearchParams({
     location,
-    limit: '12',
+    limit: String(limit),
     sort_by: 'best_match'
   });
 
