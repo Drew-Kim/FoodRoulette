@@ -4,6 +4,7 @@ import './styles.css';
 
 import Navbar from './pages/navbar';
 import Login from './pages/login';
+import Register from './pages/register';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const cuisineOptions = [
@@ -134,6 +135,7 @@ function App() {
   const path = window.location.pathname
   const isAdminPage = path.startsWith('/admin');
   const isLoginPage = path.startsWith('/login');
+  const isRegisterPage = path.startsWith('/register');
   const isCustomerPage = path.startsWith('/customer') && isLoggedIn;
   const isHomePage = path.startsWith('/admin');
 
@@ -297,6 +299,10 @@ function App() {
 
   if (isLoginPage) {
     return <Login />;
+  }
+
+  if (isRegisterPage) {
+    return <Register />;
   }
 
   if (isCustomerPage) {

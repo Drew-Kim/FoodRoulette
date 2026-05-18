@@ -13,12 +13,13 @@
 }
 
 .login-header {
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   text-align: center;
 }
 
 .input-group {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
 }
 
 .login-button {
@@ -28,9 +29,9 @@
 
 .login-footer {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 5px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .login-footer p {
