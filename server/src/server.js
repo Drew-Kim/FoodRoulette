@@ -4,6 +4,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import router from '../routes/auth.js';
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(currentDirectory, '..', '.env') });
@@ -30,6 +31,8 @@ app.use(cors({
   }
 }));
 app.use(express.json());
+
+app.use('/api/auth', router);
 
 function getYelpPriceValue(price) {
   const priceMap = {

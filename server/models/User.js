@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const UserSchema = new mongoose.Schema({
   username: {
@@ -9,9 +9,24 @@ const UserSchema = new mongoose.Schema({
     trim: true
   },
 
+  email: {
+    type: String,
+    unique: true,
+    sparse: true, // For Users don't have email
+    trim: true
+  },
+
   password: {
     type: String,
-    required: true
+    required: function() {
+      return !this.googleId; // Google Sign In doesn't require Password
+    }
+  },
+
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // For Users don't have email
   },
 
   role: {
@@ -21,24 +36,25 @@ const UserSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   const user = this;
   
   // We check password if changed --> to restore
-  if (!user.isModified('password')) return next();
+  if (!user.isModified('password')) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
-    next();
+    
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 
 // Compare passwords during login attempts
 UserSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.password) return false; //If Using Google sign In, no password
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+export default mongoose.model('User', UserSchema);
