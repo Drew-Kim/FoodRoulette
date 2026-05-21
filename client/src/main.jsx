@@ -21,6 +21,26 @@ const priceOptions = ['Any price', '$', '$$', '$$$', '$$$$'];
 const wheelColors = ['#e91e36', '#2f73e0', '#17a846', '#f2c536'];
 const spinDurationMs = 4200;
 
+function getDistanceFilterValue(miles) {
+  if (miles === 1) {
+    return 'blocks';
+  }
+
+  if (miles === 2) {
+    return 'walking';
+  }
+
+  if (miles === 3) {
+    return 'biking';
+  }
+
+  if (miles === 4) {
+    return 'driving';
+  }
+
+  return 'birdsEye';
+}
+
 function Admin() {
   return (
     <main className="app-shell">
@@ -130,10 +150,16 @@ function App() {
   const [serverStatus, setServerStatus] = useState('Checking...');
   const [databaseStatus, setDatabaseStatus] = useState('Checking...');
 
-  const [location, setLocation] = useState('San Diego, CA');
+  const [location, setLocation] = useState('Riverside, CA');
   const [cuisine, setCuisine] = useState('Any food');
   const [price, setPrice] = useState('Any price');
   const [restaurantCount, setRestaurantCount] = useState(8);
+  const [radiusMiles, setRadiusMiles] = useState(5);
+  const [useDistanceFilter, setUseDistanceFilter] = useState(true);
+  const [openNow, setOpenNow] = useState(false);
+  const [coordinates, setCoordinates] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('');
+  const [isFindingLocation, setIsFindingLocation] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
   const [searchStatus, setSearchStatus] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -200,6 +226,46 @@ function App() {
     };
   }, [isSpinning, sliceSize, wheelSegments]);
 
+  function handleLocationChange(event) {
+    setLocation(event.target.value);
+    setCoordinates(null);
+    setLocationStatus('');
+  }
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus('Your browser cannot detect location.');
+      return;
+    }
+
+    setIsFindingLocation(true);
+    setLocationStatus('Finding your location...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(5));
+        const longitude = Number(position.coords.longitude.toFixed(5));
+
+        setCoordinates({
+          latitude,
+          longitude
+        });
+        setLocation('Current Location');
+        setLocationStatus('Using your current location.');
+        setIsFindingLocation(false);
+      },
+      () => {
+        setLocationStatus('Could not detect your location. Try typing a city or zip code.');
+        setIsFindingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }
+
   async function handleSearch(event) {
     event.preventDefault();
 
@@ -209,12 +275,29 @@ function App() {
     setSelectedRestaurant(null);
     setPointerColor(wheelColors[0]);
 
+    const searchLocation = coordinates
+      ? `${coordinates.latitude}, ${coordinates.longitude}`
+      : location;
+
     const searchParams = new URLSearchParams({
-      location,
+      location: searchLocation,
       cuisine,
       price,
       count: String(restaurantCount)
     });
+
+    if (coordinates) {
+      searchParams.set('latitude', String(coordinates.latitude));
+      searchParams.set('longitude', String(coordinates.longitude));
+    }
+
+    if (useDistanceFilter) {
+      searchParams.set('distanceFilter', getDistanceFilterValue(radiusMiles));
+    }
+
+    if (openNow) {
+      searchParams.set('openNow', 'true');
+    }
 
     try {
       const response = await fetch(`${API_URL}/api/restaurants?${searchParams}`);
@@ -224,11 +307,13 @@ function App() {
         throw new Error(data.message || 'Restaurant search failed.');
       }
 
-      setRestaurants(data.restaurants || []);
+      const foundRestaurants = data.restaurants || [];
+
+      setRestaurants(foundRestaurants);
       setSearchStatus(
-        data.restaurants?.length
-          ? `Loaded ${data.restaurants.length} restaurants onto the wheel.`
-          : 'No restaurants found for that search.'
+        foundRestaurants.length
+          ? `Loaded ${foundRestaurants.length} valid restaurants${useDistanceFilter ? ` within ${radiusMiles} mile${radiusMiles === 1 ? '' : 's'}` : ' with no distance filter'}. Max ${restaurantCount}.`
+          : `No restaurants found${useDistanceFilter ? ` within ${radiusMiles} mile${radiusMiles === 1 ? '' : 's'}` : ' with no distance filter'}.`
       );
     } catch (error) {
       setSearchStatus(error.message || 'Restaurant search is unavailable right now.');
@@ -288,9 +373,53 @@ function App() {
             Location
             <input
               value={location}
-              onChange={(event) => setLocation(event.target.value)}
+              onChange={handleLocationChange}
               placeholder="City or zip code"
             />
+          </label>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={isFindingLocation}
+          >
+            {isFindingLocation ? 'Finding Location...' : 'Use My Location'}
+          </button>
+          {locationStatus && <p className="location-status">{locationStatus}</p>}
+
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={useDistanceFilter}
+              onChange={(event) => setUseDistanceFilter(event.target.checked)}
+            />
+            <span>Use nearby distance filter</span>
+          </label>
+
+          <label className="range-label">
+            Nearby radius
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={radiusMiles}
+              disabled={!useDistanceFilter}
+              onChange={(event) => setRadiusMiles(Number(event.target.value))}
+            />
+            <span>
+              {useDistanceFilter
+                ? `Within ${radiusMiles} mile${radiusMiles === 1 ? '' : 's'}`
+                : 'Distance filter off'}
+            </span>
+          </label>
+
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={openNow}
+              onChange={(event) => setOpenNow(event.target.checked)}
+            />
+            <span>Open now</span>
           </label>
 
           <label>
@@ -312,7 +441,7 @@ function App() {
           </label>
 
           <label>
-            Restaurants on wheel
+            Max restaurants on wheel
             <input
               type="number"
               min="2"
@@ -322,7 +451,7 @@ function App() {
             />
           </label>
 
-          <button type="submit" disabled={isSearching}>
+          <button type="submit" disabled={isSearching || isFindingLocation}>
             {isSearching ? 'Loading Wheel...' : 'Search Restaurants'}
           </button>
 
