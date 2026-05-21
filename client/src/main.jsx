@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-import Navbar from './pages/navbar';
+import Navbar from './components/navbar';
 import Login from './pages/login';
 import Register from './pages/register';
 

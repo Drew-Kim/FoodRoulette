@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './login.css'; //Same login UI
+import GoogleLoginButton from '../components/googleButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -9,6 +10,18 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const handleAuthSuccess = (data) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('userRole', data.user.role);
+    localStorage.setItem('username', data.user.username);
+
+    if (data.user.role === 'admin') {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/customer';
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,6 +117,18 @@ export default function Register() {
           <button type="submit" className="login-button">
             Register
           </button>
+
+          <div className="auth-divider">
+            <hr className="divider-line" />
+            <span className="divider-text">OR</span>
+            <hr className="divider-line" />
+          </div>
+
+          <GoogleLoginButton 
+            onAuthSuccess={handleAuthSuccess}
+            onAuthFailure={setError} 
+            mode="login" 
+          />            
             
           <div className="login-footer">
             <p>Already have an account? <a href="/login" className="auth-link">Sign In</a></p>

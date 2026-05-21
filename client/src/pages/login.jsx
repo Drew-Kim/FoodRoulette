@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './login.css';
+import GoogleLoginButton from '../components/googleButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -8,11 +9,20 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const handleAuthSuccess = (data) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('userRole', data.user.role);
+    localStorage.setItem('username', data.user.username);
+
+    if (data.user.role === 'admin') {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/customer';
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // I think we need to check for Admin/Normal user with DB later
-    //  and thus assign different tools/UI
     setError('');
 
     try {
@@ -27,18 +37,7 @@ export default function Login() {
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
-
-      // Save session tokens to local storage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userRole', data.user.role);
-      localStorage.setItem('username', data.user.username);
-
-      // Redirect based on role assignment
-      if (data.user.role === 'admin') {
-        window.location.href = '/admin';
-      } else {
-        window.location.href = '/customer';
-      }
+      handleAuthSuccess(data);
       console.log('Logging in with:', { username, password });
 
     } catch (err) {
@@ -86,6 +85,18 @@ export default function Login() {
         <button type="submit" className="login-button">
           Login
         </button>
+
+        <div className="auth-divider">
+          <hr className="divider-line" />
+          <span className="divider-text">OR</span>
+          <hr className="divider-line" />
+        </div>
+
+        <GoogleLoginButton 
+          onAuthSuccess={handleAuthSuccess}
+          onAuthFailure={setError} 
+          mode="login" 
+        />
           
         <div className="login-footer">
           <p>Don't have an account? <a href="/register" className="auth-link">Sign Up</a></p>

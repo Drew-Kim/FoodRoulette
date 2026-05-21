@@ -4,6 +4,7 @@ import './navbar.css';
 export default function Navbar() {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    const userRole = localStorage.getItem('userRole');
 
     const handleLogout = () => {
         localStorage.clear(); // Clear session

@@ -1,0 +1,12 @@
+.google-btn-container { 
+    width: 100%; 
+    display: flex; 
+    justify-self: center; 
+    justify-content: center 
+}
+
+.google-btn {
+    width: 100%; 
+    max-width: 320px 
+}
+
