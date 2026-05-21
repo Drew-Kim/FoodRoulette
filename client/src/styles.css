@@ -143,6 +143,18 @@ select {
   color: var(--ink);
 }
 
+input[type="range"] {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+input[type="range"]:disabled {
+  opacity: 0.45;
+}
+
 button {
   min-height: 48px;
   border: 0;
@@ -156,6 +168,38 @@ button {
 button:disabled {
   cursor: wait;
   opacity: 0.64;
+}
+
+.secondary-button {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  background: #fffdf8;
+  color: var(--accent);
+}
+
+.location-status {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.toggle-label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.toggle-label input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--accent);
+}
+
+.range-label span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .search-status {
