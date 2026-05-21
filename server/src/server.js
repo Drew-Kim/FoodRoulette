@@ -17,6 +17,42 @@ const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://localhost:5175'
 ]);
+
+const feedbackSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ['bug', 'feedback'],
+      required: true
+    },
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: 120
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: 2000
+    },
+    email: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    status: {
+      type: String,
+      enum: ['new', 'reviewed', 'resolved'],
+      default: 'new'
+    }
+  },
+  { timestamps: true }
+);
+
+const feedbackForm = mongoose.model('feedbackForm', feedbackSchema)
+
 let databaseConnectionError = '';
 
 app.use(cors({
@@ -160,4 +196,71 @@ app.get('/api/restaurants', async (request, response) => {
 app.listen(port, async () => {
   await connectToDatabase();
   console.log(`Food Roulette API running on http://localhost:${port}`);
+});
+
+app.post('/api/feedback', async (req, res) => {
+  const { type, subject, message, email } = req.body;
+
+  if (!type || !['bug', 'feedback'].includes(type)) {
+    return res.status(400).json({ message: 'Type must be either "bug" or "feedback".'});
+  }
+  if (!subject?.trim()) {
+    return res.status(400).json({ message: 'Subject is required.'});
+  }
+  if (!message?.trim()) {
+    return res.status(400).json({ message: 'Message is required.'});
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Database is not connected. Cannot save feedback.' });
+  }
+
+  try {
+    const entry = await feedbackForm.create({
+      type,
+      subject: subject.trim(),
+      message: message.trim(),
+      email: email?.trim() || ''
+    });
+    return res.status(201).json({ message: 'Thank you! Your feedback is important to us.!', id: entry._id });
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not save your feedback at the moment. Please try again shortly.'});
+  }
+});
+
+app.get('/api/admin/feedback', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Database is not connected. '});
+  }
+
+  try {
+    const entries = await feedbackForm.find().sort({ createdAt: -1 }).lean();
+    return res.json({ entries });
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not fetch feedback entries.' });
+  }
+});
+
+app.patch('/api/admin/feedback/:id', async (req, res) => {
+  const { status } = req.body;
+  if (!status || !['new', 'reviewed', 'resolved'].includes(status)) {
+    return res.status(400).json({ message: 'Status must be "new", "reviewed", or "resolved".' });
+  }
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Database is not connected.' });
+  }
+
+  try {
+    const entry = await feedbackForm.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!entry) {
+      return res.status(404).json({ message: 'Specified feedback form not found.' });
+    }
+    return res.json({ message: 'Status updated.', entry });
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not update feedback.' });
+  }
 });

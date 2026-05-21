@@ -469,3 +469,228 @@ button:disabled {
     height: 94px;
   }
 }
+
+.feedback-workspace {
+  grid-template-columns: minmax(0, 560px);
+}
+
+.feedback-form-panel {
+  max-width: 560px;
+}
+
+.feedback-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid #cfc3b2;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: var(--ink);
+  resize: vertical;
+  font: inherit;
+}
+
+.feedback-optional {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.feedback-type-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feedback-type-fieldset legend {
+  color: var(--label);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.feedback-type-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.feedback-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: #fffdf8;
+  cursor: pointer;
+  font-weight: 700;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.feedback-type-option input[type="radio"] {
+  display: none;
+}
+
+.feedback-type-option.active {
+  border-color: var(--accent);
+  background: rgba(216, 36, 61, 0.07);
+  color: var(--accent);
+}
+
+.feedback-success {
+  display: grid;
+  gap: 12px;
+}
+
+.feedback-success h2 {
+  margin-bottom: 0;
+}
+
+.admin-feedback-section {
+  max-width: var(--content-width);
+  margin: 0 auto;
+}
+
+.admin-feedback-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.feedback-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
+.admin-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-filter-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #ede7da;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.admin-filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.admin-entries {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-entry {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(38, 31, 24, 0.06);
+  border-left: 4px solid var(--border);
+}
+
+.admin-entry--new {
+  border-left-color: var(--accent);
+}
+
+.admin-entry--reviewed {
+  border-left-color: #2f73e0;
+}
+
+.admin-entry--resolved {
+  border-left-color: #17a846;
+  opacity: 0.72;
+}
+
+.admin-entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.admin-entry-type {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: var(--ink);
+  background: #ede7da;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+.admin-entry-status {
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+.admin-entry-status--new    { background: rgba(216,36,61,0.12); color: var(--accent); }
+.admin-entry-status--reviewed { background: rgba(47,115,224,0.12); color: #2f73e0; }
+.admin-entry-status--resolved { background: rgba(23,168,70,0.12); color: #17a846; }
+
+.admin-entry-date,
+.admin-entry-email {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.admin-entry-subject {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.admin-entry-message {
+  margin: 0 0 14px;
+  font-size: 0.94rem;
+  color: var(--muted);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.admin-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-status-btn {
+  min-height: 32px;
+  padding: 0 12px;
+  background: #ede7da;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.admin-status-btn.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.admin-status-btn:disabled {
+  cursor: default;
+  opacity: 1;
+}
