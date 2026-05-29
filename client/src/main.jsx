@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import Navbar from './components/navbar';
+import Login from './pages/login';
+import Register from './pages/register';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const cuisineOptions = [
@@ -196,7 +199,10 @@ function Admin() {
   useEffect(() => {
     async function loadFeedback() {
       try {
-        const response = await fetch(`${API_URL}/api/admin/feedback`);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/admin/feedback`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || 'Load failed.');
         setEntries(data.entries || []);
@@ -212,7 +218,10 @@ function Admin() {
     try {
       const response = await fetch(`${API_URL}/api/admin/feedback/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ status: newStatus })
       });
       const data = await response.json();
@@ -303,6 +312,29 @@ function Admin() {
   );
 }
 
+function CustomerPage() {
+  const username = localStorage.getItem('username') || 'there';
+
+  return (
+    <>
+      <Navbar />
+      <main className="app-shell">
+        <section className="intro">
+          <div>
+            <p className="eyebrow">Account</p>
+            <h1>Hi, {username}</h1>
+          </div>
+          <div className="status-panel" aria-label="Navigation">
+            <span>
+              <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>Back to Roulette</a>
+            </span>
+          </div>
+        </section>
+      </main>
+    </>
+  );
+}
+
 function getWheelSegments(items) {
   return items.map((item, index) => {
     let color = wheelColors[index % wheelColors.length];
@@ -389,8 +421,15 @@ function getPointerColorForRotation(rotation, sliceSize, segments) {
 }
 
 function App() {
-  const isAdminPage = window.location.pathname.startsWith('/admin');
-  const isFeedbackPage = window.location.pathname.startsWith('/feedback');
+  const path = window.location.pathname;
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  const isLoggedIn = Boolean(token);
+  const isAdminPage = path.startsWith('/admin');
+  const isCustomerPage = path.startsWith('/customer');
+  const isFeedbackPage = path.startsWith('/feedback');
+  const isLoginPage = path.startsWith('/login');
+  const isRegisterPage = path.startsWith('/register');
 
   const wheelRef = useRef(null);
 
@@ -439,6 +478,32 @@ function App() {
 
     loadStatus();
   }, []);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    async function verifyToken() {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.authenticated) {
+          localStorage.clear();
+          if (isAdminPage || isCustomerPage) {
+            window.location.href = '/login';
+          }
+        }
+      } catch (error) {
+        localStorage.clear();
+      }
+    }
+
+    verifyToken();
+  }, [token, isAdminPage, isCustomerPage]);
 
   useEffect(() => {
     if (isSpinning || !wheelRef.current) {
@@ -593,7 +658,27 @@ function App() {
   }
 
   if (isAdminPage) {
+    if (!isLoggedIn || userRole !== 'admin') {
+      return <Login />;
+    }
+
     return <Admin />;
+  }
+
+  if (isLoginPage) {
+    return <Login />;
+  }
+
+  if (isRegisterPage) {
+    return <Register />;
+  }
+
+  if (isCustomerPage) {
+    if (!isLoggedIn) {
+      return <Login />;
+    }
+
+    return <CustomerPage />;
   }
 
   if (isFeedbackPage) {
@@ -601,6 +686,8 @@ function App() {
   }
 
   return (
+    <>
+    <Navbar />
     <main className="app-shell">
       <section className="intro">
         <div>
@@ -805,6 +892,7 @@ function App() {
         </section>
       )}
     </main>
+    </>
   );
 }
 

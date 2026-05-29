@@ -1,9 +1,11 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import authRouter from '../routes/auth.js';
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(currentDirectory, '..', '.env') });
@@ -75,6 +77,33 @@ app.use(cors({
   }
 }));
 app.use(express.json());
+app.use('/api/auth', authRouter);
+
+function requireAdmin(request, response, next) {
+  const authHeader = request.headers.authorization;
+  const token = authHeader?.split(' ')[1];
+
+  if (!token) {
+    return response.status(401).json({ message: 'Admin login is required.' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    return response.status(500).json({ message: 'JWT_SECRET is not configured.' });
+  }
+
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (user.role !== 'admin') {
+      return response.status(403).json({ message: 'Admin access is required.' });
+    }
+
+    request.user = user;
+    return next();
+  } catch (error) {
+    return response.status(401).json({ message: 'Admin login is invalid or expired.' });
+  }
+}
 
 function getYelpPriceValue(price) {
   const priceMap = {
@@ -328,7 +357,7 @@ app.post('/api/feedback', async (req, res) => {
   }
 });
 
-app.get('/api/admin/feedback', async (req, res) => {
+app.get('/api/admin/feedback', requireAdmin, async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ message: 'Database is not connected. '});
   }
@@ -341,7 +370,7 @@ app.get('/api/admin/feedback', async (req, res) => {
   }
 });
 
-app.patch('/api/admin/feedback/:id', async (req, res) => {
+app.patch('/api/admin/feedback/:id', requireAdmin, async (req, res) => {
   const { status } = req.body;
   if (!status || !['new', 'reviewed', 'resolved'].includes(status)) {
     return res.status(400).json({ message: 'Status must be "new", "reviewed", or "resolved".' });

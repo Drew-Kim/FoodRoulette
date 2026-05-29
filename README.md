@@ -4,24 +4,30 @@ Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to
 
 ## Project Progress
 
-The application has a React frontend, a Node and Express backend, environment variable examples, and deployment config started for Vercel and Render.
+The application has a React frontend, a Node and Express backend, MongoDB setup, Yelp search, and deployment config started for Vercel and Render to host the webpage on to [www.foodroulette.cc](https://www.foodroulette.cc/)
 
 - Created the React and Vite client.
 - Created the Node and Express API server.
-- Added MongoDB connection setup with local .env support.
-- Added backend health and database status on webpage.
+- Added MongoDB Atlas connection setup with local `.env` support.
+- Added backend health and database status checks.
 - Added a Yelp restaurant search endpoint.
-- Built the first Food Roulette search page with location, cuisine, and price filters.
-- Added a starter roulette wheel UI and restaurant result cards.
-- Added a basic admin route placeholder at /admin/
+- Built the Food Roulette search page with location, cuisine, price, open now, and nearby distance filters.
+- Added a current location button that can search with browser location.
+- Polished the roulette wheel, pointer, spin behavior, winner card, and restaurant result cards.
+- Added login, register, customer, admin, and feedback pages.
+- Added user accounts with customer and admin roles.
+- Added feedback and bug report saving, plus an admin view for reviewing reports.
+- Added environment examples and deployment config for Vercel and Render.
 
-[www.foodroulette.cc](https://www.foodroulette.cc/)
 
 ## Project Structure
 
 - client/ - React webpage
 - server/ - Node.js API server
-- .env - environment variables place in the server folder
+- server/routes/ - backend route files
+- server/models/ - MongoDB models
+- server/.env - private server environment variables
+- client/.env - private client environment variables
 
 The project will utilize MongoDB for the database, React will be used for the frontend webpage, Node.js will run the backend server, and Express will help Node.js create backend API routes.
 
@@ -40,6 +46,9 @@ The server uses Express, MongoDB tools, and environment variables.
 - CORS lets the React client talk to the backend.
 - Dotenv loads private values from `server/.env`.
 - Mongoose connects the server to MongoDB.
+- Bcrypt hashes account passwords.
+- JSON Web Token handles signed in user sessions.
+- Google Auth Library supports Google sign in.
 - Nodemon can restart the server while developing.
 
 The project also uses hosting tools.
@@ -57,7 +66,14 @@ npm run install:all
 ```
 
 Create a local environment file for private values as "server/.env":
-Then update `server/.env` with your real MongoDB connection string and API keys. Do not commit `.env`.
+Then update `server/.env` with the real MongoDB connection string, Yelp API key, JWT secret, and Google client values. Do not commit `.env`.
+
+Create `client/.env` when the client needs local values:
+
+```text
+VITE_API_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+```
 
 Start the client and server:
 
@@ -75,6 +91,12 @@ Open the admin entry:
 
 ```text
 http://localhost:5173/admin/
+```
+
+Open the feedback form:
+
+```text
+http://localhost:5173/feedback
 ```
 
 The Node API runs at:
