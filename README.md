@@ -20,6 +20,7 @@ The application has a React frontend, a Node and Express backend, MongoDB setup,
 - Polished the roulette wheel, pointer, spin behavior, winner card, and restaurant result cards.
 - Added login, register, customer, admin, and feedback pages.
 - Added user accounts with customer and admin roles.
+- Added basic username checks for unique accounts and safer profile updates.
 - Added feedback and bug report saving, plus an admin view for reviewing reports.
 - Added environment examples and deployment config for Vercel and Render.
 

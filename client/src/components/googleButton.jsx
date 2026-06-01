@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { readJson } from '../api';
 import './googleButton.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -36,7 +37,7 @@ export default function GoogleLoginButton({ onAuthSuccess, onAuthFailure, mode =
           body: JSON.stringify({ idToken: googleResponse.credential })
         });
 
-        const data = await response.json();
+        const data = await readJson(response);
 
         if (!response.ok) {
           throw new Error(data.message || 'Google authentication failed');

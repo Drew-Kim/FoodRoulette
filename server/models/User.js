@@ -33,7 +33,31 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ['customer', 'admin'],
     default: 'customer'
-  }
+  },
+
+  gender: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  age: {
+    type: Number,
+    min: 1,
+    max: 120
+  },
+
+  location: {
+    type: String,
+    trim: true,
+    maxLength: 120,
+    default: ''
+  },
+
+  friends: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, { timestamps: true });
 
 UserSchema.pre('save', async function () {

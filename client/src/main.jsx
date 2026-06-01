@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { readJson } from './api';
 import './styles.css';
 import Navbar from './components/navbar';
 import Login from './pages/login';
@@ -44,7 +45,7 @@ function FeedbackPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, subject, message, email })
       });
-      const data = await res.json();
+      const data = await readJson(res);
 
       if (!res.ok) {
         throw new Error(data.message || 'Submission failed.');
@@ -203,7 +204,7 @@ function Admin() {
         const response = await fetch(`${API_URL}/api/admin/feedback`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.message || 'Load failed.');
         setEntries(data.entries || []);
         setLoadStatus(data.entries?.length ? '' : 'No submissions yet.');
@@ -224,7 +225,7 @@ function Admin() {
         },
         body: JSON.stringify({ status: newStatus })
       });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.message);
       setEntries((prev) => prev.map((e) => (e._id === id ? { ...e, status: newStatus } : e)));
     } catch (error) {
@@ -313,7 +314,185 @@ function Admin() {
 }
 
 function CustomerPage() {
-  const username = localStorage.getItem('username') || 'there';
+  const emptyProfile = {
+    username: localStorage.getItem('username') || '',
+    email: '',
+    role: localStorage.getItem('userRole') || '',
+    gender: '',
+    age: '',
+    location: ''
+  };
+  const [profile, setProfile] = useState({
+    ...emptyProfile
+  });
+  const [savedProfile, setSavedProfile] = useState({
+    ...emptyProfile
+  });
+  const [friends, setFriends] = useState([]);
+  const [friendUsername, setFriendUsername] = useState('');
+  const [friendStatus, setFriendStatus] = useState('Loading friends...');
+  const [status, setStatus] = useState('Loading profile...');
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function loadFriends() {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/friends`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not load friends.');
+      }
+
+      setFriends(data.friends || []);
+      setFriendStatus(data.friends?.length ? '' : 'No friends added yet.');
+    } catch (error) {
+      setFriendStatus(error.message || 'Could not load friends.');
+    }
+  }
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await readJson(response);
+
+        if (!response.ok || !data.authenticated) {
+          throw new Error(data.message || 'Could not load profile.');
+        }
+
+        const nextProfile = {
+          username: data.user.username || '',
+          email: data.user.email || '',
+          role: data.user.role || '',
+          gender: data.user.gender || '',
+          age: data.user.age || '',
+          location: data.user.location || ''
+        };
+
+        setProfile(nextProfile);
+        setSavedProfile(nextProfile);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('userRole', data.user.role);
+        setStatus('');
+      } catch (error) {
+        setStatus(error.message || 'Could not load profile.');
+      }
+    }
+
+    loadProfile();
+    loadFriends();
+  }, []);
+
+  function updateField(field, value) {
+    setProfile((currentProfile) => ({
+      ...currentProfile,
+      [field]: value
+    }));
+  }
+
+  async function handleProfileSubmit(event) {
+    event.preventDefault();
+    setIsSaving(true);
+    setStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          username: profile.username,
+          email: profile.email,
+          gender: profile.gender,
+          age: profile.age,
+          location: profile.location
+        })
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not save profile.');
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.user.username);
+      localStorage.setItem('userRole', data.user.role);
+      const nextProfile = {
+        username: data.user.username || '',
+        email: data.user.email || '',
+        role: data.user.role || '',
+        gender: data.user.gender || '',
+        age: data.user.age || '',
+        location: data.user.location || ''
+      };
+
+      setProfile(nextProfile);
+      setSavedProfile(nextProfile);
+      setStatus(data.message || 'Profile updated.');
+    } catch (error) {
+      setStatus(error.message || 'Could not save profile.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleAddFriend(event) {
+    event.preventDefault();
+    setIsAddingFriend(true);
+    setFriendStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/friends`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ username: friendUsername })
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not add friend.');
+      }
+
+      setFriends(data.friends || []);
+      setFriendUsername('');
+      setFriendStatus(data.message || 'Friend added.');
+    } catch (error) {
+      setFriendStatus(error.message || 'Could not add friend.');
+    } finally {
+      setIsAddingFriend(false);
+    }
+  }
+
+  async function handleRemoveFriend(friendId) {
+    setFriendStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/friends/${friendId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not remove friend.');
+      }
+
+      setFriends(data.friends || []);
+      setFriendStatus(data.friends?.length ? data.message : 'No friends added yet.');
+    } catch (error) {
+      setFriendStatus(error.message || 'Could not remove friend.');
+    }
+  }
 
   return (
     <>
@@ -322,13 +501,156 @@ function CustomerPage() {
         <section className="intro">
           <div>
             <p className="eyebrow">Account</p>
-            <h1>Hi, {username}</h1>
+            <h1>Profile</h1>
           </div>
           <div className="status-panel" aria-label="Navigation">
+            {profile.role && <span>Role: {profile.role}</span>}
             <span>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>Back to Roulette</a>
             </span>
           </div>
+        </section>
+
+        <section className="workspace profile-workspace">
+          <form className="search-panel profile-panel" onSubmit={handleProfileSubmit}>
+            <div>
+              <p className="panel-kicker">Profile</p>
+              <h2>Basic information</h2>
+            </div>
+
+            <label>
+              Username
+              <input
+                value={profile.username}
+                onChange={(event) => updateField('username', event.target.value)}
+                minLength={3}
+                maxLength={30}
+                required
+              />
+            </label>
+
+            <label>
+              Email
+              <input
+                type="email"
+                value={profile.email}
+                onChange={(event) => updateField('email', event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+
+            <label>
+              Gender
+              <select
+                value={profile.gender}
+                onChange={(event) => updateField('gender', event.target.value)}
+              >
+                <option value="">Prefer not to say</option>
+                <option>Female</option>
+                <option>Male</option>
+                <option>Non-binary</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label>
+              Age
+              <input
+                type="number"
+                min="1"
+                max="120"
+                value={profile.age}
+                onChange={(event) => updateField('age', event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+
+            <label>
+              Location
+              <input
+                value={profile.location}
+                onChange={(event) => updateField('location', event.target.value)}
+                placeholder="City, state, or area"
+                maxLength={120}
+              />
+            </label>
+
+            <button type="submit" disabled={isSaving || !profile.username.trim()}>
+              {isSaving ? 'Saving...' : 'Save Profile'}
+            </button>
+
+            {status && <p className="search-status">{status}</p>}
+
+            <div className="profile-summary">
+              <p className="panel-kicker">Saved Information</p>
+              <dl>
+                <div>
+                  <dt>Username</dt>
+                  <dd>{savedProfile.username || 'Not added'}</dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{savedProfile.email || 'Not added'}</dd>
+                </div>
+                <div>
+                  <dt>Gender</dt>
+                  <dd>{savedProfile.gender || 'Not added'}</dd>
+                </div>
+                <div>
+                  <dt>Age</dt>
+                  <dd>{savedProfile.age || 'Not added'}</dd>
+                </div>
+                <div>
+                  <dt>Location</dt>
+                  <dd>{savedProfile.location || 'Not added'}</dd>
+                </div>
+              </dl>
+            </div>
+          </form>
+
+          <section className="search-panel profile-panel friend-panel">
+            <div>
+              <p className="panel-kicker">Friends</p>
+              <h2>Add by username</h2>
+            </div>
+
+            <form className="friend-form" onSubmit={handleAddFriend}>
+              <label>
+                Username
+                <input
+                  value={friendUsername}
+                  onChange={(event) => setFriendUsername(event.target.value)}
+                  placeholder="Friend username"
+                  required
+                />
+              </label>
+              <button type="submit" disabled={isAddingFriend || !friendUsername.trim()}>
+                {isAddingFriend ? 'Adding...' : 'Add'}
+              </button>
+            </form>
+
+            {friends.length > 0 && (
+              <div className="friend-list">
+                {friends.map((friend) => (
+                  <div className="friend-row" key={friend.id}>
+                    <div>
+                      <strong>{friend.username}</strong>
+                      {friend.email && <span>{friend.email}</span>}
+                    </div>
+                    <button
+                      className="friend-remove"
+                      type="button"
+                      onClick={() => handleRemoveFriend(friend.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {friendStatus && <p className="search-status">{friendStatus}</p>}
+          </section>
         </section>
       </main>
     </>
@@ -464,11 +786,11 @@ function App() {
     async function loadStatus() {
       try {
         const healthResponse = await fetch(`${API_URL}/api/health`);
-        const health = await healthResponse.json();
+        const health = await readJson(healthResponse);
         setServerStatus(health.message || 'Node server is running');
 
         const databaseResponse = await fetch(`${API_URL}/api/db-status`);
-        const database = await databaseResponse.json();
+        const database = await readJson(databaseResponse);
         setDatabaseStatus(database.message || database.status);
       } catch (error) {
         setServerStatus('Node server is not connected yet');
@@ -489,7 +811,7 @@ function App() {
         const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const data = await response.json();
+        const data = await readJson(response);
 
         if (!response.ok || !data.authenticated) {
           localStorage.clear();
@@ -613,7 +935,7 @@ function App() {
 
     try {
       const response = await fetch(`${API_URL}/api/restaurants?${searchParams}`);
-      const data = await response.json();
+      const data = await readJson(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Restaurant search failed.');

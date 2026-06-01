@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { readJson } from '../api';
 import './login.css';
 import GoogleLoginButton from '../components/googleButton';
 
@@ -32,7 +33,7 @@ export default function Login() {
         body: JSON.stringify({ username, password })
       });
 
-      const data = await response.json();
+      const data = await readJson(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');

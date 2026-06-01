@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { readJson } from '../api';
 import './login.css'; //Same login UI
 import GoogleLoginButton from '../components/googleButton';
 
@@ -45,7 +46,7 @@ export default function Register() {
         })
       });
 
-      const data = await response.json();
+      const data = await readJson(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
