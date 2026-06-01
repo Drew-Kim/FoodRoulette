@@ -24,6 +24,7 @@ const fallbackWheelItems = ['Tacos', 'Sushi', 'Burgers', 'Pasta', 'Pizza', 'Rame
 const priceOptions = ['Any price', '$', '$$', '$$$', '$$$$'];
 const wheelColors = ['#e91e36', '#2f73e0', '#17a846', '#f2c536'];
 const spinDurationMs = 4200;
+const usernamePattern = /^[a-zA-Z0-9_]{3,30}$/;
 
 function FeedbackPage() {
   const [type, setType] = useState('feedback');
@@ -349,7 +350,11 @@ function CustomerPage() {
       setFriends(data.friends || []);
       setFriendStatus(data.friends?.length ? '' : 'No friends added yet.');
     } catch (error) {
-      setFriendStatus(error.message || 'Could not load friends.');
+      const message = error.message === 'Server connection is not available right now. Please try again shortly.'
+        ? 'Friends are unavailable right now. Please try again shortly.'
+        : error.message;
+
+      setFriendStatus(message || 'Could not load friends.');
     }
   }
 
@@ -389,6 +394,25 @@ function CustomerPage() {
   }, []);
 
   function updateField(field, value) {
+    if (field === 'age') {
+      if (value === '') {
+        setProfile((currentProfile) => ({
+          ...currentProfile,
+          age: ''
+        }));
+        return;
+      }
+
+      const age = Number(value);
+
+      if (!Number.isInteger(age) || age < 1 || age > 120) {
+        setStatus('Age must be a whole number between 1 and 120.');
+        return;
+      }
+
+      setStatus('');
+    }
+
     setProfile((currentProfile) => ({
       ...currentProfile,
       [field]: value
@@ -399,6 +423,16 @@ function CustomerPage() {
     event.preventDefault();
     setIsSaving(true);
     setStatus('');
+
+    if (profile.age !== '') {
+      const age = Number(profile.age);
+
+      if (!Number.isInteger(age) || age < 1 || age > 120) {
+        setStatus('Age must be a whole number between 1 and 120.');
+        setIsSaving(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch(`${API_URL}/api/auth/profile`, {
@@ -445,6 +479,13 @@ function CustomerPage() {
 
   async function handleAddFriend(event) {
     event.preventDefault();
+    const username = friendUsername.trim();
+
+    if (!usernamePattern.test(username)) {
+      setFriendStatus('Enter a valid username using 3 to 30 letters, numbers, or underscores.');
+      return;
+    }
+
     setIsAddingFriend(true);
     setFriendStatus('');
 
@@ -455,7 +496,7 @@ function CustomerPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ username: friendUsername })
+        body: JSON.stringify({ username })
       });
       const data = await readJson(response);
 
@@ -467,7 +508,11 @@ function CustomerPage() {
       setFriendUsername('');
       setFriendStatus(data.message || 'Friend added.');
     } catch (error) {
-      setFriendStatus(error.message || 'Could not add friend.');
+      const message = error.message === 'Server connection is not available right now. Please try again shortly.'
+        ? 'Friends are unavailable right now. Please try again shortly.'
+        : error.message;
+
+      setFriendStatus(message || 'Could not add friend.');
     } finally {
       setIsAddingFriend(false);
     }
@@ -490,7 +535,11 @@ function CustomerPage() {
       setFriends(data.friends || []);
       setFriendStatus(data.friends?.length ? data.message : 'No friends added yet.');
     } catch (error) {
-      setFriendStatus(error.message || 'Could not remove friend.');
+      const message = error.message === 'Server connection is not available right now. Please try again shortly.'
+        ? 'Friends are unavailable right now. Please try again shortly.'
+        : error.message;
+
+      setFriendStatus(message || 'Could not remove friend.');
     }
   }
 

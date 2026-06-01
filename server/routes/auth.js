@@ -6,6 +6,7 @@ import {OAuth2Client}from 'google-auth-library';
 import User from '../models/User.js';
 
 const router = express.Router();
+const usernamePattern = /^[a-zA-Z0-9_]{3,30}$/;
 
 function getJwtSecret() {
   return process.env.JWT_SECRET;
@@ -41,6 +42,10 @@ function getGoogleErrorMessage(error) {
   }
 
   return 'Google authentication processing failed';
+}
+
+function isValidUsername(username) {
+  return usernamePattern.test(username);
 }
 
 function getPublicUser(user) {
@@ -107,7 +112,15 @@ function requireAuth(req, res, next) {
 // REGISTER: POST
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = req.body.username?.trim();
+    const { password } = req.body;
+
+    if (!isValidUsername(username)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username must be 3 to 30 characters and use only letters, numbers, or underscores'
+      });
+    }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ username });
@@ -316,6 +329,13 @@ router.patch('/profile', requireAuth, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Username must be 3 to 30 characters' });
   }
 
+  if (!isValidUsername(username)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Username can only use letters, numbers, or underscores'
+    });
+  }
+
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ success: false, message: 'Enter a valid email address' });
   }
@@ -383,6 +403,13 @@ router.post('/friends', requireAuth, async (req, res) => {
 
   if (!username) {
     return res.status(400).json({ success: false, message: 'Enter a username to add' });
+  }
+
+  if (!isValidUsername(username)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Enter a valid username using letters, numbers, or underscores'
+    });
   }
 
   try {
