@@ -2,9 +2,13 @@
 
 Food Roulette is a React, Node.js, and MongoDB web app that uses the Yelp API to help users discover nearby restaurants and randomly choose where to eat with a fun roulette style picker.
 
-Project Google Drive folder:
+Project Google Drive folder: [Food Roulette Google Drive](https://drive.google.com/drive/folders/1xxX7x9AXT2iwbUZ4-f3UW9MkdTteGOlM?usp=drive_link)
 
-[Food Roulette Google Drive](https://drive.google.com/drive/folders/1xxX7x9AXT2iwbUZ4-f3UW9MkdTteGOlM?usp=drive_link)
+## Video Demo
+
+https://github.com/user-attachments/assets/57e61054-4383-48ea-b58e-92f0c3a4b373
+
+
 
 ## Project Progress
 
