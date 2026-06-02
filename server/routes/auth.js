@@ -435,7 +435,12 @@ router.post('/friends', requireAuth, async (req, res) => {
     }
 
     user.friends.push(friend._id);
-    await user.save();
+
+    if (!friend.friends.some((friendId) => String(friendId) === String(user._id))) {
+      friend.friends.push(user._id);
+    }
+
+    await Promise.all([user.save(), friend.save()]);
 
     const friends = await getFriendsForUser(user._id);
     res.status(201).json({ success: true, message: 'Friend added', friends });
@@ -456,8 +461,18 @@ router.delete('/friends/:friendId', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'User was not found' });
     }
 
+    const friend = await User.findById(req.params.friendId);
+
     user.friends = user.friends.filter((friendId) => String(friendId) !== req.params.friendId);
-    await user.save();
+
+    if (friend) {
+      friend.friends = friend.friends.filter((friendId) => String(friendId) !== String(user._id));
+    }
+
+    await Promise.all([
+      user.save(),
+      friend ? friend.save() : Promise.resolve()
+    ]);
 
     const friends = await getFriendsForUser(user._id);
     res.json({ success: true, message: 'Friend removed', friends });
