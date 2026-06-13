@@ -8,6 +8,8 @@ Project Google Drive folder: [Food Roulette Google Drive](https://drive.google.c
 
 https://github.com/user-attachments/assets/57e61054-4383-48ea-b58e-92f0c3a4b373
 
+## Group Members
+Seong Kim, Truong Le, Mario Miranda
 
 
 ## Project Progress
